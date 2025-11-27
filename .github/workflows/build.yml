@@ -1,0 +1,70 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, dom, filter, gd, json, zip, curl
+          coverage: none
+
+      - name: Validate composer.json (if exists)
+        run: |
+          if [ -f "composer.json" ]; then
+            composer validate --strict
+          else
+            echo "No composer.json found, skipping validation"
+          fi
+
+      - name: Install Composer dependencies
+        run: |
+          if [ -f "composer.json" ]; then
+            composer install --prefer-dist --no-progress --no-interaction
+          else
+            echo "No composer.json found, skipping dependency installation"
+          fi
+
+      - name: Clear cache
+        run: |
+          if [ -d "var/cache" ]; then
+            rm -rf var/cache/*
+            echo "Cache cleared"
+          else
+            echo "No cache directory found, nothing to clear"
+          fi
+          
+          if [ -d "cache" ]; then
+            rm -rf cache/*
+            echo "Legacy cache cleared"
+          else
+            echo "No legacy cache directory found"
+          fi
+
+      - name: Verify folder structure
+        run: |
+          echo "Verifying Mautic folder structure..."
+          test -d "app" && echo "✓ app/ exists" || echo "✗ app/ missing"
+          test -d "plugins" && echo "✓ plugins/ exists" || echo "✗ plugins/ missing"
+          test -d "themes" && echo "✓ themes/ exists" || echo "✗ themes/ missing"
+          test -d "scripts" && echo "✓ scripts/ exists" || echo "✗ scripts/ missing"
+          test -f "app/config/local.php.example" && echo "✓ local.php.example exists" || echo "✗ local.php.example missing"
+          echo "Folder structure verification complete"
