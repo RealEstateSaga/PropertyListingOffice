@@ -1,0 +1,51 @@
+# =============================================================================
+# Mautic Project .gitignore
+# =============================================================================
+
+# Composer dependencies
+/vendor/
+
+# Cache and temporary files
+/var/cache/
+/var/tmp/
+/cache/
+
+# Logs
+/var/logs/
+/var/log/
+/logs/
+*.log
+
+# Media uploads
+/media/
+
+# Local configuration files
+/app/config/local.php
+/app/config/local.php.bak
+/.env.local
+/.env.*.local
+
+# IDE and editor files
+/.idea/
+/.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+/build/
+
+# Node modules (if applicable)
+/node_modules/
+
+# Test coverage
+/coverage/
+
+# Operating system files
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
