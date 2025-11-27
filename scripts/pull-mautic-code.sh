@@ -9,7 +9,7 @@
 #   1. Creates a temporary archive on the server excluding unwanted files
 #   2. Downloads the archive to the local repository
 #   3. Extracts the files into the repo
-#   4. Stages, commits with a clear message, and pushes to main
+#   4. Stages, commits with a clear message, and pushes to the configured branch
 #
 # What gets pulled:
 #   - app/          Main application directory (excluding local.php)
@@ -176,22 +176,14 @@ create_remote_archive() {
         # Create tar archive, excluding unwanted files
         tar -czf $(printf '%q' "${REMOTE_ARCHIVE}") \
             --exclude='media' \
-            --exclude='media/*' \
             --exclude='cache' \
-            --exclude='cache/*' \
             --exclude='var/cache' \
-            --exclude='var/cache/*' \
             --exclude='logs' \
-            --exclude='logs/*' \
             --exclude='var/logs' \
-            --exclude='var/logs/*' \
             --exclude='var/log' \
-            --exclude='var/log/*' \
             --exclude='app/config/local.php' \
             --exclude='vendor' \
-            --exclude='vendor/*' \
             --exclude='node_modules' \
-            --exclude='node_modules/*' \
             --exclude='*.log' \
             --exclude='.env' \
             --exclude='.env.local' \
