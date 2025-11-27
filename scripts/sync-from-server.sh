@@ -119,14 +119,6 @@ parse_args() {
     done
 }
 
-build_ssh_options() {
-    local ssh_opts=""
-    if [[ -n "$MAUTIC_SSH_KEY" ]]; then
-        ssh_opts="-i ${MAUTIC_SSH_KEY}"
-    fi
-    echo "$ssh_opts"
-}
-
 sync_directory() {
     local src_dir="$1"
     local dest_dir="$2"
@@ -134,34 +126,40 @@ sync_directory() {
 
     log_info "Syncing ${description}..."
 
-    local ssh_opts
-    ssh_opts=$(build_ssh_options)
-
-    local rsync_opts="-avz --delete --exclude-from=${REPO_ROOT}/.rsync-exclude"
+    # Build rsync command arguments as an array for safety
+    local rsync_args=(-avz --delete "--exclude-from=${REPO_ROOT}/.rsync-exclude")
+    
     if [[ -n "$DRY_RUN" ]]; then
-        rsync_opts="${rsync_opts} ${DRY_RUN}"
+        rsync_args+=(--dry-run)
     fi
     if [[ -n "$VERBOSE" ]]; then
-        rsync_opts="${rsync_opts} ${VERBOSE}"
+        rsync_args+=(-v)
     fi
 
-    # Build SSH command for rsync
-    local rsh_opt=""
-    if [[ -n "$ssh_opts" ]]; then
-        rsh_opt="-e \"ssh ${ssh_opts}\""
+    # Build SSH command with proper quoting
+    if [[ -n "$MAUTIC_SSH_KEY" ]]; then
+        rsync_args+=(-e "ssh -i \"${MAUTIC_SSH_KEY}\"")
     fi
 
     # Ensure destination exists
     mkdir -p "${dest_dir}"
 
-    # Execute rsync
-    if [[ -n "$rsh_opt" ]]; then
-        eval rsync ${rsync_opts} ${rsh_opt} "${MAUTIC_SERVER_HOST}:${src_dir}/" "${dest_dir}/"
-    else
-        rsync ${rsync_opts} "${MAUTIC_SERVER_HOST}:${src_dir}/" "${dest_dir}/"
-    fi
+    # Execute rsync with properly quoted arguments
+    rsync "${rsync_args[@]}" "${MAUTIC_SERVER_HOST}:${src_dir}/" "${dest_dir}/"
 
     log_info "Completed syncing ${description}"
+}
+
+check_server_directory() {
+    local remote_path="$1"
+    local ssh_args=()
+    
+    if [[ -n "$MAUTIC_SSH_KEY" ]]; then
+        ssh_args+=(-i "${MAUTIC_SSH_KEY}")
+    fi
+    
+    # Use printf %q to safely quote the remote path for the shell
+    ssh "${ssh_args[@]}" "${MAUTIC_SERVER_HOST}" "test -d $(printf '%q' "${remote_path}")" 2>/dev/null
 }
 
 main() {
@@ -195,7 +193,7 @@ main() {
 
     # Sync custom scripts if they exist on server
     log_info "Checking for custom scripts on server..."
-    if ssh ${ssh_opts:-} "${MAUTIC_SERVER_HOST}" "test -d ${MAUTIC_SERVER_PATH}/scripts" 2>/dev/null; then
+    if check_server_directory "${MAUTIC_SERVER_PATH}/scripts"; then
         sync_directory "${MAUTIC_SERVER_PATH}/scripts" "${REPO_ROOT}/scripts" "scripts/ directory"
     else
         log_info "No scripts/ directory found on server, skipping..."
