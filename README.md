@@ -11,7 +11,8 @@ A Mautic-based marketing automation platform for PropertyListingOffice.com.
 ├── plugins/                # Custom plugins
 ├── themes/                 # Custom themes
 ├── scripts/                # Utility scripts
-│   └── sync-from-server.sh # Server sync script
+│   ├── sync-from-server.sh # Server sync script (rsync-based)
+│   └── pull-mautic-code.sh # Pull script (archive-based)
 ├── .rsync-exclude          # Exclusion patterns for sync
 └── .github/workflows/      # CI/CD workflows
 ```
@@ -88,6 +89,37 @@ git push origin main
 - SSH key configured for passwordless access to the server
 - `rsync` installed on both local and remote systems
 - Read permissions for the Mautic directories on the server
+
+### Alternative: Archive-Based Pull
+
+For environments where rsync is not available, use the archive-based approach:
+
+1. Edit `scripts/pull-mautic-code.sh` and update the placeholder variables:
+
+```bash
+# Server connection details
+SERVER_USER="SERVER_USER"           # Replace with SSH username
+SERVER_IP="SERVER_IP"               # Replace with server hostname or IP
+
+# Paths
+REMOTE_MAUTIC_PATH="/path/to/mautic"    # Replace with Mautic path on server
+LOCAL_REPO_PATH="/path/to/local/repo"   # Replace with local repository path
+
+# Git configuration (optional)
+GIT_BRANCH="main"                       # Target branch to push to
+```
+
+2. Run the pull script:
+
+```bash
+./scripts/pull-mautic-code.sh
+```
+
+The script will:
+1. Create a temporary archive on the server excluding media/, cache/, logs/, and app/config/local.php
+2. Download the archive to your local machine
+3. Extract the files into the repository
+4. Stage, commit with a clear message, and push to the configured branch
 
 ## Build
 
