@@ -49,6 +49,9 @@ SERVER_IP="SERVER_IP"               # Server hostname or IP address
 REMOTE_MAUTIC_PATH="/path/to/mautic"    # Path to Mautic installation on server
 LOCAL_REPO_PATH="/path/to/local/repo"   # Path to local repository
 
+# Git configuration
+GIT_BRANCH="main"                       # Target branch to push to
+
 # =============================================================================
 # Script variables (do not modify unless necessary)
 # =============================================================================
@@ -142,35 +145,58 @@ create_remote_archive() {
     log_info "Creating archive of: ${REMOTE_MAUTIC_PATH}"
     log_info "Archive location: ${REMOTE_ARCHIVE}"
     
-    # Create tar archive on remote server, excluding unwanted files
-    # Using printf %q to safely quote paths for the remote shell
-    ssh "${SERVER_USER}@${SERVER_IP}" "cd $(printf '%q' "${REMOTE_MAUTIC_PATH}") && tar -czf $(printf '%q' "${REMOTE_ARCHIVE}") \
-        --exclude='media' \
-        --exclude='media/*' \
-        --exclude='cache' \
-        --exclude='cache/*' \
-        --exclude='var/cache' \
-        --exclude='var/cache/*' \
-        --exclude='logs' \
-        --exclude='logs/*' \
-        --exclude='var/logs' \
-        --exclude='var/logs/*' \
-        --exclude='var/log' \
-        --exclude='var/log/*' \
-        --exclude='app/config/local.php' \
-        --exclude='vendor' \
-        --exclude='vendor/*' \
-        --exclude='node_modules' \
-        --exclude='node_modules/*' \
-        --exclude='*.log' \
-        --exclude='.env' \
-        --exclude='.env.local' \
-        app plugins themes 2>/dev/null || true"
-    
-    # Also include scripts directory if it exists
-    ssh "${SERVER_USER}@${SERVER_IP}" "if [ -d $(printf '%q' "${REMOTE_MAUTIC_PATH}/scripts") ]; then \
-        cd $(printf '%q' "${REMOTE_MAUTIC_PATH}") && tar -rzf $(printf '%q' "${REMOTE_ARCHIVE}") scripts 2>/dev/null || true; \
-    fi"
+    # Build the list of directories to archive, checking for existence
+    # Using a single tar command to avoid issues with appending to compressed archives
+    ssh "${SERVER_USER}@${SERVER_IP}" "
+        cd $(printf '%q' "${REMOTE_MAUTIC_PATH}")
+        
+        # Build list of directories to include
+        DIRS_TO_ARCHIVE=''
+        
+        # Check required directories
+        for dir in app plugins themes; do
+            if [ -d \"\$dir\" ]; then
+                DIRS_TO_ARCHIVE=\"\$DIRS_TO_ARCHIVE \$dir\"
+            else
+                echo \"[WARN] Directory \$dir not found, skipping...\" >&2
+            fi
+        done
+        
+        # Check optional scripts directory
+        if [ -d scripts ]; then
+            DIRS_TO_ARCHIVE=\"\$DIRS_TO_ARCHIVE scripts\"
+        fi
+        
+        # Verify we have at least one directory to archive
+        if [ -z \"\$DIRS_TO_ARCHIVE\" ]; then
+            echo \"[ERROR] No directories found to archive\" >&2
+            exit 1
+        fi
+        
+        # Create tar archive, excluding unwanted files
+        tar -czf $(printf '%q' "${REMOTE_ARCHIVE}") \
+            --exclude='media' \
+            --exclude='media/*' \
+            --exclude='cache' \
+            --exclude='cache/*' \
+            --exclude='var/cache' \
+            --exclude='var/cache/*' \
+            --exclude='logs' \
+            --exclude='logs/*' \
+            --exclude='var/logs' \
+            --exclude='var/logs/*' \
+            --exclude='var/log' \
+            --exclude='var/log/*' \
+            --exclude='app/config/local.php' \
+            --exclude='vendor' \
+            --exclude='vendor/*' \
+            --exclude='node_modules' \
+            --exclude='node_modules/*' \
+            --exclude='*.log' \
+            --exclude='.env' \
+            --exclude='.env.local' \
+            \$DIRS_TO_ARCHIVE
+    "
     
     log_info "Archive created successfully on server"
 }
@@ -248,9 +274,9 @@ commit_and_push() {
     log_info "Committing with message: ${commit_message}"
     git commit -m "${commit_message}"
     
-    # Push to main branch
-    log_info "Pushing to main branch..."
-    git push origin main
+    # Push to configured branch
+    log_info "Pushing to ${GIT_BRANCH} branch..."
+    git push origin "${GIT_BRANCH}"
     
     log_info "Changes committed and pushed successfully"
 }

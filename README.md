@@ -104,6 +104,9 @@ SERVER_IP="SERVER_IP"               # Replace with server hostname or IP
 # Paths
 REMOTE_MAUTIC_PATH="/path/to/mautic"    # Replace with Mautic path on server
 LOCAL_REPO_PATH="/path/to/local/repo"   # Replace with local repository path
+
+# Git configuration (optional)
+GIT_BRANCH="main"                       # Target branch to push to
 ```
 
 2. Run the pull script:
@@ -116,7 +119,7 @@ The script will:
 1. Create a temporary archive on the server excluding media/, cache/, logs/, and app/config/local.php
 2. Download the archive to your local machine
 3. Extract the files into the repository
-4. Stage, commit with a clear message, and push to main
+4. Stage, commit with a clear message, and push to the configured branch
 
 ## Build
 
