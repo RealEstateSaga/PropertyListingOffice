@@ -127,7 +127,8 @@ sync_directory() {
     log_info "Syncing ${description}..."
 
     # Build rsync command arguments as an array for safety
-    local rsync_args=(-avz --delete "--exclude-from=${REPO_ROOT}/.rsync-exclude")
+    # Using -az (archive + compress) as base, verbose is added separately if requested
+    local rsync_args=(-az --delete "--exclude-from=${REPO_ROOT}/.rsync-exclude")
     
     if [[ -n "$DRY_RUN" ]]; then
         rsync_args+=(--dry-run)
