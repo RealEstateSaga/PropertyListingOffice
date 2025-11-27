@@ -1,0 +1,72 @@
+# =============================================================================
+# Rsync Exclude Patterns for Mautic Server Sync
+# =============================================================================
+# This file defines patterns to exclude when syncing from the live server.
+# Used by scripts/sync-from-server.sh
+# =============================================================================
+
+# Media uploads - user-generated content, too large for repository
+media/
+/media/
+
+# Cache directories - generated at runtime
+cache/
+/cache/
+var/cache/
+/var/cache/
+
+# Log files - server-specific, contain sensitive info
+logs/
+/logs/
+var/logs/
+/var/logs/
+var/log/
+/var/log/
+*.log
+
+# Local configuration - contains credentials and server-specific settings
+app/config/local.php
+/app/config/local.php
+local.php
+
+# Composer vendor directory - should be installed via composer
+vendor/
+/vendor/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+
+# Build artifacts
+build/
+dist/
+
+# Node modules
+node_modules/
+
+# Test coverage
+coverage/
+
+# Session files
+var/sessions/
+sessions/
+
+# Translations compile cache
+translations/
+app/cache/
