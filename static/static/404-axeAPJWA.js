@@ -1,0 +1,1 @@
+import{V as t,n as _}from"./index-BM-DvTdL.js";const n=t.extend({});var r=function(){var e=this;return e._self._c,e._self._setupProxy,e._m(0)},a=[function(){var s=this,e=s._self._c;return s._self._setupProxy,e("section",{staticClass:"page-404"},[e("h1",{staticClass:"title"},[s._v(" 404 ")])])}],o=_(n,r,a);const i=o.exports;export{i as default};
